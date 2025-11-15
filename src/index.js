@@ -64,20 +64,15 @@ const adminOnly = (req, res, next) => {
 // Proxy /api/user to user service
 app.use(
   "/api/user",
-  (req, res, next) => {
-    console.log("Proxy to user service:", req.method, req.url);
-    next();
-  },
-  httpProxy("http://localhost:4001", {
-    proxyReqPathResolver: (req) => `/auth${req.url}` // <-- make sure it points to user routes
+  httpProxy("http://user:4001", {  // <-- use service name 'user'
+    proxyReqPathResolver: (req) => req.url,
   })
 );
 
-// Proxy /api/admin to admin service
 app.use(
   "/api/admin",
   authMiddleware,
-  httpProxy("http://localhost:4002", {
+  httpProxy("http://admin:4002", {  // <-- use service name 'admin'
     proxyReqPathResolver: (req) => req.url,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
       if (srcReq.user) {
