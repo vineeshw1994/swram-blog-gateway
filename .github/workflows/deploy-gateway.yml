@@ -1,0 +1,31 @@
+name: 🚀 Deploy Gateway (Swarm)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy-gateway:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build and Push Gateway Image
+        run: |
+          docker build -t vineeshw1994/swarm-blog-gateway:${{ github.sha }} .
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+          docker tag vineeshw1994/swarm-blog-gateway:${{ github.sha }} vineeshw1994/swarm-blog-gateway:latest
+          docker push vineeshw1994/swarm-blog-gateway:${{ github.sha }}
+          docker push vineeshw1994/swarm-blog-gateway:latest
+
+      - name: SSH Deploy to Swarm
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /var/www/swarm
+            docker stack deploy -c deploy_gateway.yml blogstack
