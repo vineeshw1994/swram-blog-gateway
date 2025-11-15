@@ -9,7 +9,7 @@ const app = express();
 // ADD CORS HERE (ONLY IN GATEWAY!)
 app.use(
   cors({
-    origin: "http://localhost:3001", // Your React app
+    origin: "http://apibgway.genzcodershub.com", // Your React app
     credentials: true, // Allow cookies (refreshToken)
   })
 );
