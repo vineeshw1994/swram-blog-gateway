@@ -7,15 +7,27 @@ const jwt = require("jsonwebtoken");
 const app = express();
 
 // ADD CORS HERE (ONLY IN GATEWAY!)
+// CORS middleware
 app.use(cors({
   origin: [
     "http://blog.genzcodershub.com",
     "https://blog.genzcodershub.com",
-    "http://localhost:3001" // optional for local testing
+    "http://localhost:3001"
   ],
-  methods: "GET,POST,PUT,DELETE,PATCH",
+  methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+// Handle preflight requests
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
+
 
 app.use(express.json());
 
@@ -48,23 +60,25 @@ const adminOnly = (req, res, next) => {
 
 
 // Proxy Routes
+
+// Proxy /api/user to user service
 app.use(
   "/api/user",
   (req, res, next) => {
-    console.log("this api for user service"), next();
+    console.log("Proxy to user service:", req.method, req.url);
+    next();
   },
   httpProxy("http://localhost:4001", {
-    proxyReqPathResolver: (req) => req.url, // ← JUST req.url
+    proxyReqPathResolver: (req) => `/auth${req.url}` // <-- make sure it points to user routes
   })
 );
 
+// Proxy /api/admin to admin service
 app.use(
   "/api/admin",
   authMiddleware,
   httpProxy("http://localhost:4002", {
-    proxyReqPathResolver: (req) => req.url, // ← JUST req.url
-
-    // ADD THIS: Forward user info via header
+    proxyReqPathResolver: (req) => req.url,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
       if (srcReq.user) {
         proxyReqOpts.headers['x-user-id'] = srcReq.user.id;
@@ -75,15 +89,7 @@ app.use(
   })
 );
 
-// app.use('/api/user',(req,res,next)=>{console.log('this api for user service'), next()}, httpProxy('http://localhost:4001', {
-//   proxyReqPathResolver: req => `/api/user${req.url}` // Maps /api/user/signup to /api/user/signup
-// }));
-// app.use('/api/admin', authMiddleware, httpProxy('http://localhost:4002', {
-//   proxyReqPathResolver: req => `/api/admin${req.url}`
-// }));
-// app.use('/api/order', authMiddleware, httpProxy('http://localhost:3003', {
-//   proxyReqPathResolver: req => `/api/order${req.url}`
-// }));
+
 
 const PORT = 4000;
 app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
