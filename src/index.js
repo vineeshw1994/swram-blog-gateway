@@ -7,12 +7,15 @@ const jwt = require("jsonwebtoken");
 const app = express();
 
 // ADD CORS HERE (ONLY IN GATEWAY!)
-app.use(
-  cors({
-    origin: "http://apibgway.genzcodershub.com", // Your React app
-    credentials: true, // Allow cookies (refreshToken)
-  })
-);
+app.use(cors({
+  origin: [
+    "http://blog.genzcodershub.com",
+    "https://blog.genzcodershub.com",
+    "http://localhost:3001" // optional for local testing
+  ],
+  methods: "GET,POST,PUT,DELETE,PATCH",
+  credentials: true
+}));
 
 app.use(express.json());
 
