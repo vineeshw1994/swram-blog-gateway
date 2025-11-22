@@ -6,7 +6,6 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-// ADD CORS HERE (ONLY IN GATEWAY!)
 // CORS middleware
 app.use(cors({
   origin: [
@@ -28,7 +27,6 @@ app.options("*", (req, res) => {
   res.sendStatus(200);
 });
 
-
 app.use(express.json());
 
 // Auth Middleware
@@ -39,12 +37,10 @@ const authMiddleware = (req, res, next) => {
   try {
     console.log("valid token");
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // ATTACH USER TO req
     req.user = {
       id: payload.sub,
       role: payload.role || "user",
     };
-
     console.log("req.user attached:", req.user);
     next();
   } catch (err) {
@@ -58,13 +54,11 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
-
 // Proxy Routes
-
-// Proxy /api/user to user service
 app.use(
   "/api/user",
-  httpProxy("http://user:4001", {  // <-- use service name 'user'
+  httpProxy("http://user:4001", {  // ← Changed to user-service
+    timeout: 10000,
     proxyReqPathResolver: (req) => req.url,
   })
 );
@@ -72,7 +66,8 @@ app.use(
 app.use(
   "/api/admin",
   authMiddleware,
-  httpProxy("http://admin:4002", {  // <-- use service name 'admin'
+  httpProxy("http://admin:4002", {  // ← Changed to post-service
+    timeout: 10000,
     proxyReqPathResolver: (req) => req.url,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
       if (srcReq.user) {
@@ -83,8 +78,6 @@ app.use(
     },
   })
 );
-
-
 
 const PORT = 4000;
 app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
