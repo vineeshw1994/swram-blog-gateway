@@ -57,7 +57,7 @@ const adminOnly = (req, res, next) => {
 // Proxy Routes
 app.use(
   "/api/user",
-  httpProxy("http://tasks.user:4001", {  // ← Changed to user-service
+  httpProxy("http://user:4001", {  // ← Changed to user-service
     timeout: 10000,
     proxyReqPathResolver: (req) => req.url,
   })
@@ -66,7 +66,7 @@ app.use(
 app.use(
   "/api/admin",
   authMiddleware,
-  httpProxy("http://tasks.admin:4002", {  // ← Changed to post-service
+  httpProxy("http://admin:4002", {  // ← Changed to post-service
     timeout: 10000,
     proxyReqPathResolver: (req) => req.url,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
